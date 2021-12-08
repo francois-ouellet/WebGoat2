@@ -35,6 +35,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import static java.sql.ResultSet.CONCUR_UPDATABLE;
 import static java.sql.ResultSet.TYPE_SCROLL_SENSITIVE;
@@ -130,14 +132,12 @@ public class SqlInjectionLesson8 extends AssignmentEndpoint {
         Calendar cal = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String time = sdf.format(cal.getTime());
-
-        String logQuery = "INSERT INTO access_log (time, action) VALUES ('" + time + "', '" + action + "')";
-
-        try {
-            Statement statement = connection.createStatement(TYPE_SCROLL_SENSITIVE, CONCUR_UPDATABLE);
-            statement.executeUpdate(logQuery);
-        } catch (SQLException e) {
-            System.err.println(e.getMessage());
-        }
+        
+        
+        String query2 = "INSERT INTO access_log (time, action) VALUES ('?', '?')";
+        PreparedStatement statement = connection.prepareStatement(query2);
+        statement.setString(1, time);
+        statement.setString(2, action);
+        ResultSet results = statement.executeQuery();
     }
 }
