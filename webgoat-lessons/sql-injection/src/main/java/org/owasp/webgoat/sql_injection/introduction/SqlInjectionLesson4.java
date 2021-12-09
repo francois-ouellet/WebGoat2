@@ -54,10 +54,33 @@ public class SqlInjectionLesson4 extends AssignmentEndpoint {
     @PostMapping("/SqlInjection/attack4")
     @ResponseBody
     public AttackResult completed(@RequestParam String query) {
+        injectableQuery2(query);
         return injectableQuery(query);
     }
 
     protected AttackResult injectableQuery(String query) {
+        try (Connection connection = dataSource.getConnection()) {
+            try (Statement statement = connection.createStatement(TYPE_SCROLL_INSENSITIVE, CONCUR_READ_ONLY)) {
+                statement.executeUpdate(query);
+                connection.commit();
+                ResultSet results = statement.executeQuery("SELECT phone from employees;");
+                StringBuffer output = new StringBuffer();
+                // user completes lesson if column phone exists
+                if (results.first()) {
+                    output.append("<span class='feedback-positive'>" + query + "</span>");
+                    return success(this).output(output.toString()).build();
+                } else {
+                    return failed(this).output(output.toString()).build();
+                }
+            } catch (SQLException sqle) {
+                return failed(this).output(sqle.getMessage()).build();
+            }
+        } catch (Exception e) {
+            return failed(this).output(this.getClass().getName() + " : " + e.getMessage()).build();
+        }
+    }
+    
+    protected AttackResult injectableQuery2(String query) {
         try (Connection connection = dataSource.getConnection()) {
             try (Statement statement = connection.createStatement(TYPE_SCROLL_INSENSITIVE, CONCUR_READ_ONLY)) {
                 statement.executeUpdate(query);
